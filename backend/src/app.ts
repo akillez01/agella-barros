@@ -1,10 +1,13 @@
-import express from 'express';
 import cors from 'cors';
+import express from 'express';
 import { env } from './config/env';
-import { bookingsRouter } from './routes/bookings.routes';
-import { aiRouter } from './routes/ai.routes';
 import { adminRouter } from './routes/admin';
+import { aiRouter } from './routes/ai.routes';
+import { bookingsRouter } from './routes/bookings.routes';
 import { catalogRouter } from './routes/catalog.routes';
+import { ordersRouter } from './routes/orders.routes';
+import { paymentsRouter } from './routes/payments.routes';
+import { webhooksRouter } from './routes/webhooks.routes';
 
 export function createApp() {
   const app = express();
@@ -22,6 +25,9 @@ export function createApp() {
 
   app.use('/api/bookings', bookingsRouter);
   app.use('/api/ai', aiRouter);
+  app.use('/api', ordersRouter);
+  app.use('/api', paymentsRouter);
+  app.use('/api', webhooksRouter);
   app.use('/api/admin', adminRouter);
   app.use('/api', catalogRouter);
 

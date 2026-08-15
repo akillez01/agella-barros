@@ -1,15 +1,18 @@
 import { Router } from 'express';
 import { adminAuth } from '../../middleware/adminAuth';
-import { adminMediaRouter } from './media.routes';
-import { adminProductsRouter } from './products.routes';
-import { adminGalleryRouter } from './gallery.routes';
-import { adminSpecialistsRouter } from './specialists.routes';
-import { adminPagesRouter } from './pages.routes';
-import { adminSettingsRouter } from './settings.routes';
-import { adminOrdersRouter } from './orders.routes';
+import { adminAuthRouter } from './auth.routes';
 import { adminBookingsRouter } from './bookings.routes';
+import { adminGalleryRouter } from './gallery.routes';
+import { adminMediaRouter } from './media.routes';
+import { adminOrdersRouter } from './orders.routes';
+import { adminPagesRouter } from './pages.routes';
+import { adminProductsRouter } from './products.routes';
+import { adminSettingsRouter } from './settings.routes';
+import { adminSpecialistsRouter } from './specialists.routes';
 
 export const adminRouter = Router();
+
+adminRouter.use('/auth', adminAuthRouter);
 
 adminRouter.use(adminAuth);
 

@@ -11,6 +11,7 @@ export const env = {
   DATABASE_URL: required('DATABASE_URL'),
   FRONTEND_URL: process.env.FRONTEND_URL || 'https://angellabarros.com',
   UPLOAD_DIR: process.env.UPLOAD_DIR || '/app/uploads',
+  NODE_ENV: process.env.NODE_ENV || 'development',
 
   // Chat da Bela — provider selecionável sem mexer em código, só na env var.
   // 'anthropic' (padrão) usa o loop de tool-use já validado; 'google' usa
@@ -22,9 +23,16 @@ export const env = {
   GOOGLE_API_KEY: process.env.GOOGLE_API_KEY || '',
   GOOGLE_MODEL: process.env.GOOGLE_MODEL || 'gemini-3.6-flash',
 
-  // Token compartilhado simples pra proteger /api/admin/* nesta rodada.
-  // TODO: substituir por sessão real (admin_users/admin_sessions já
-  // modelados no schema.sql, com bcrypt) quando o login do painel deixar de
-  // ser só usuário/senha comparados no navegador.
-  ADMIN_API_TOKEN: process.env.ADMIN_API_TOKEN || '',
+  ADMIN_SESSION_COOKIE: process.env.ADMIN_SESSION_COOKIE || 'ab_admin_session',
+  ADMIN_SESSION_TTL_HOURS: Number(process.env.ADMIN_SESSION_TTL_HOURS || '168'),
+
+  // Pagamentos (Sprint 1): ordem real + Pix + cartao (modo manual opcional).
+  PIX_KEY: process.env.PIX_KEY || '',
+  PIX_MERCHANT: process.env.PIX_MERCHANT || 'ANGELLA BARROS STUDIO',
+  PIX_CITY: process.env.PIX_CITY || 'PARINTINS',
+  PIX_EXPIRES_MINUTES: Number(process.env.PIX_EXPIRES_MINUTES || '30'),
+
+  // Se false, cartao fica pendente ate conciliacao/manual ou gateway real.
+  CARD_MANUAL_AUTO_APPROVE: (process.env.CARD_MANUAL_AUTO_APPROVE || 'true') === 'true',
+  WEBHOOK_SECRET: process.env.WEBHOOK_SECRET || '',
 };

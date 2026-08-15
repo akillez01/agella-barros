@@ -6,12 +6,16 @@
 (() => {
   'use strict';
   const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const TOUCH   = matchMedia('(hover: none), (pointer: coarse)').matches;
-  const $  = (s, c=document) => c.querySelector(s);
-  const $$ = (s, c=document) => [...c.querySelectorAll(s)];
+  const TOUCH = matchMedia('(hover: none), (pointer: coarse)').matches;
+  const $ = (s, c = document) => c.querySelector(s);
+  const $$ = (s, c = document) => [...c.querySelectorAll(s)];
 
   let lenis = null, booted = false, ctx = null, canvas = null;
   let frames = [], frameCount = 0, currentIdx = -1, fallbackImg = null;
+  let fakePctTimer = null;
+  let bootPctTimer = null;
+  let loaderStartedAt = 0;
+  let loaderClosing = false;
   const DPR = Math.min(devicePixelRatio || 1, 1.75);
 
   /* ——— canvas ——— */
@@ -32,9 +36,10 @@
     const cw = canvas.width, ch = canvas.height;
     const s = Math.max(cw / img.naturalWidth, ch / img.naturalHeight) * zoom;
     const dw = img.naturalWidth * s, dh = img.naturalHeight * s;
+    const xBias = innerWidth <= 900 ? cw * 0.12 : cw * 0.08;
     ctx.fillStyle = '#160a0e';
     ctx.fillRect(0, 0, cw, ch);
-    ctx.drawImage(img, (cw - dw) / 2, (ch - dh) * 0.22, dw, dh);   // enquadra o rosto no terço superior
+    ctx.drawImage(img, (cw - dw) / 2 + xBias, (ch - dh) * 0.22, dw, dh);   // desloca o foco para a direita, liberando a lateral esquerda para a copy
   }
   function drawFrame(i) {
     let j = Math.max(0, Math.min(frameCount - 1, i));
@@ -51,15 +56,91 @@
 
   /* ——— loader ——— */
   const RING = 326.7;
+  let pctNow = 0;
   function setPct(p) {
+    pctNow = Math.max(0, Math.min(1, Number(p) || 0));
     const el = $('#loadPct'), ring = $('.li-ring');
-    if (el) el.textContent = String(Math.round(p * 100)).padStart(2, '0');
-    if (ring) ring.style.strokeDashoffset = String(RING * (1 - p));
+    if (el) el.textContent = String(Math.round(pctNow * 100)).padStart(2, '0');
+    if (ring) ring.style.strokeDashoffset = String(RING * (1 - pctNow));
+  }
+  function tweenPct(to, ms = 280) {
+    const from = pctNow;
+    const start = performance.now();
+    const endVal = Math.max(0, Math.min(1, Number(to) || 0));
+    const tick = (now) => {
+      const t = Math.min(1, (now - start) / ms);
+      setPct(from + (endVal - from) * t);
+      if (t < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }
+  function startFakePct() {
+    if (fakePctTimer) clearInterval(fakePctTimer);
+    if (bootPctTimer) { clearInterval(bootPctTimer); bootPctTimer = null; }
+    loaderStartedAt = performance.now();
+    setPct(Math.max(pctNow, 0.03));
+    fakePctTimer = setInterval(() => {
+      const elapsed = performance.now() - loaderStartedAt;
+      const cap = 0.97;
+      let base;
+      if (elapsed < 450) base = 0.11;       // arranque rápido
+      else if (elapsed < 1000) base = 0.065; // velocidade média
+      else if (elapsed < 1800) base = 0.03;  // começa a desacelerar
+      else base = 0.012;                     // aproximação final
+
+      const remaining = Math.max(0, cap - pctNow);
+      const jitter = (Math.random() * 0.004) - 0.0015;
+      const inc = Math.max(0.004, base * remaining * 1.9 + jitter);
+      const next = Math.min(cap, pctNow + inc);
+      setPct(next);
+      if (next >= cap) {
+        clearInterval(fakePctTimer);
+        fakePctTimer = null;
+      }
+    }, 90);
+  }
+  function stopFakePct() {
+    if (fakePctTimer) {
+      clearInterval(fakePctTimer);
+      fakePctTimer = null;
+    }
+  }
+  function startBootPct() {
+    if (bootPctTimer) clearInterval(bootPctTimer);
+    setPct(Math.max(pctNow, 0.01));
+    bootPctTimer = setInterval(() => {
+      // Progresso visual inicial enquanto o app/React ainda está carregando.
+      const next = Math.min(0.28, pctNow + 0.01);
+      setPct(next);
+      if (next >= 0.28) {
+        clearInterval(bootPctTimer);
+        bootPctTimer = null;
+      }
+    }, 90);
   }
   function hideLoader() {
-    document.body.classList.remove('is-loading');
-    const l = $('#loader');
-    if (l) { l.classList.add('is-done'); setTimeout(() => { l.style.display = 'none'; }, 1000); }
+    if (loaderClosing) return;
+    loaderClosing = true;
+    stopFakePct();
+    if (bootPctTimer) { clearInterval(bootPctTimer); bootPctTimer = null; }
+    const minVisibleMs = 1600;
+    const elapsed = loaderStartedAt ? (performance.now() - loaderStartedAt) : minVisibleMs;
+    const wait = Math.max(0, minVisibleMs - elapsed);
+
+    setTimeout(() => {
+      tweenPct(1, 380);
+      document.body.classList.remove('is-loading');
+      const l = $('#loader');
+      if (l) {
+        l.classList.add('is-done');
+        setTimeout(() => {
+          l.style.display = 'none';
+          loaderClosing = false;
+        }, 1000);
+      } else {
+        loaderClosing = false;
+      }
+    }, wait);
   }
 
   /* ——— preload ——— */
@@ -67,14 +148,15 @@
     const man = window.__FRAMES_MANIFEST__ || {};
     const count = REDUCED ? 0 : (+cfg.count || +man.count || 0);
     if (!count) {
+      tweenPct(.35, 220);
       fallbackImg = await loadImg(cfg.poster || $('#film')?.dataset.poster || 'assets/angella-portrait.png');
-      setPct(1);
+      tweenPct(1, 360);
       return false;
     }
     frameCount = count;
     const dir = cfg.dir || man.dir || 'assets/frames/';
     const pad = +cfg.pad || +man.pad || 4;
-    const src = (i) => `${dir}${cfg.prefix || 'f-'}${String(i+1).padStart(pad,'0')}${cfg.ext || '.jpg'}`;
+    const src = (i) => `${dir}${cfg.prefix || 'f-'}${String(i + 1).padStart(pad, '0')}${cfg.ext || '.jpg'}`;
     frames = new Array(frameCount);
     let loaded = 0, next = 0, done;
     const ready = new Promise(r => done = r);
@@ -90,7 +172,7 @@
         if (currentIdx >= 0 && Math.abs(i - currentIdx) < 2) drawFrame(currentIdx);
       }
     };
-    Promise.all(Array.from({length: 8}, worker)).then(done);
+    Promise.all(Array.from({ length: 8 }, worker)).then(done);
     await ready;
     return true;
   }
@@ -106,7 +188,7 @@
     if (window.ResizeObserver) new ResizeObserver(redraw).observe(canvas);
 
     const atoEl = $('#hudAto'), pctEl = $('#hudPct');
-    const romans = ['I','II','III','IV'];
+    const romans = ['I', 'II', 'III', 'IV'];
 
     ScrollTrigger.create({
       trigger: hero, start: 'top top', end: 'bottom bottom', scrub: true,
@@ -121,21 +203,21 @@
           drawImage(fallbackImg, lastZoom);   // ken burns
         }
         if (atoEl) atoEl.textContent = romans[Math.min(3, Math.floor(p * 4))];
-        if (pctEl) pctEl.textContent = String(Math.round(p * 100)).padStart(2,'0');
+        if (pctEl) pctEl.textContent = String(Math.round(p * 100)).padStart(2, '0');
       }
     });
 
     if (REDUCED) return;
-    const tl = gsap.timeline({defaults:{ease:'none'}, scrollTrigger:{trigger:hero, start:'top top', end:'bottom bottom', scrub:true}});
-    tl.to('.ho-intro',  {opacity:0, y:-70, duration:.10}, .06)
-      .fromTo('.ho-1', {opacity:0, y:70}, {opacity:1, y:0, duration:.07}, .19)
-      .to('.ho-1',     {opacity:0, y:-70, duration:.07}, .33)
-      .fromTo('.ho-2', {opacity:0, y:70}, {opacity:1, y:0, duration:.07}, .43)
-      .to('.ho-2',     {opacity:0, y:-70, duration:.07}, .57)
-      .fromTo('.ho-3', {opacity:0, scale:.93}, {opacity:1, scale:1, duration:.08}, .67)
-      .to('.ho-3',     {opacity:0, scale:1.07, duration:.07}, .83)
-      .to('.hero-hud', {opacity:0, duration:.05}, .93);
-    gsap.to('.hud-scroll', {opacity:0, scrollTrigger:{trigger:hero, start:'2% top', end:'7% top', scrub:true}});
+    const tl = gsap.timeline({ defaults: { ease: 'none' }, scrollTrigger: { trigger: hero, start: 'top top', end: 'bottom bottom', scrub: true } });
+    tl.to('.ho-intro', { opacity: 0, y: -70, duration: .10 }, .06)
+      .fromTo('.ho-1', { opacity: 0, y: 70 }, { opacity: 1, y: 0, duration: .07 }, .19)
+      .to('.ho-1', { opacity: 0, y: -70, duration: .07 }, .33)
+      .fromTo('.ho-2', { opacity: 0, y: 70 }, { opacity: 1, y: 0, duration: .07 }, .43)
+      .to('.ho-2', { opacity: 0, y: -70, duration: .07 }, .57)
+      .fromTo('.ho-3', { opacity: 0, scale: .93 }, { opacity: 1, scale: 1, duration: .08 }, .67)
+      .to('.ho-3', { opacity: 0, scale: 1.07, duration: .07 }, .83)
+      .to('.hero-hud', { opacity: 0, duration: .05 }, .93);
+    gsap.to('.hud-scroll', { opacity: 0, scrollTrigger: { trigger: hero, start: '2% top', end: '7% top', scrub: true } });
   }
 
   /* ——— revelações, íris e parallax ——— */
@@ -159,8 +241,10 @@
 
     // parallax (depende de scroll, então não esconde nada)
     $$('.ig-avatar-ring img, .product-img img').forEach(img => {
-      gsap.fromTo(img, {yPercent:-6}, {yPercent:6, ease:'none',
-        scrollTrigger:{trigger:img.closest('.ig-avatar-ring, .product-img') || img, start:'top bottom', end:'bottom top', scrub:true}});
+      gsap.fromTo(img, { yPercent: -6 }, {
+        yPercent: 6, ease: 'none',
+        scrollTrigger: { trigger: img.closest('.ig-avatar-ring, .product-img') || img, start: 'top bottom', end: 'bottom top', scrub: true }
+      });
     });
   }
 
@@ -180,8 +264,10 @@
       }
     });
     $$('.h-media img', track).forEach(img => {
-      gsap.fromTo(img, {xPercent:-7}, {xPercent:7, ease:'none',
-        scrollTrigger:{trigger: img.closest('.h-panel'), containerAnimation: hAnim, start:'left right', end:'right left', scrub:true}});
+      gsap.fromTo(img, { xPercent: -7 }, {
+        xPercent: 7, ease: 'none',
+        scrollTrigger: { trigger: img.closest('.h-panel'), containerAnimation: hAnim, start: 'left right', end: 'right left', scrub: true }
+      });
     });
   }
 
@@ -190,8 +276,8 @@
     if (TOUCH || REDUCED) return;
     const cur = $('.cursor'); if (!cur) return;
     cur.style.opacity = 1;
-    const qx = gsap.quickTo(cur, 'x', {duration:.34, ease:'power3.out'});
-    const qy = gsap.quickTo(cur, 'y', {duration:.34, ease:'power3.out'});
+    const qx = gsap.quickTo(cur, 'x', { duration: .34, ease: 'power3.out' });
+    const qy = gsap.quickTo(cur, 'y', { duration: .34, ease: 'power3.out' });
     addEventListener('mousemove', e => { qx(e.clientX); qy(e.clientY); });
     document.addEventListener('mouseover', e => {
       const view = e.target.closest('[data-cursor="view"], .masonry figure, .ig-post, .h-panel');
@@ -205,8 +291,8 @@
   function buildChrome() {
     const nav = $('.nav');
     const on = (y) => nav && nav.classList.toggle('scrolled', y > 12);
-    if (lenis) lenis.on('scroll', ({scroll}) => on(scroll));
-    else addEventListener('scroll', () => on(scrollY), {passive:true});
+    if (lenis) lenis.on('scroll', ({ scroll }) => on(scroll));
+    else addEventListener('scroll', () => on(scrollY), { passive: true });
   }
 
   /* ——— API pública ——— */
@@ -216,16 +302,18 @@
       if (typeof gsap === 'undefined' || typeof ScrollTrigger === 'undefined') { hideLoader(); return; }
       booted = true;
       gsap.registerPlugin(ScrollTrigger);
+      setPct(0);
+      startFakePct();
 
       if (!REDUCED && typeof Lenis !== 'undefined') {
-        lenis = new Lenis({lerp:.09, smoothWheel:true, syncTouch:false});
+        lenis = new Lenis({ lerp: .09, smoothWheel: true, syncTouch: false });
         lenis.on('scroll', ScrollTrigger.update);
         gsap.ticker.add(t => lenis.raf(t * 1000));
         gsap.ticker.lagSmoothing(0);
         lenis.stop();
       }
       canvas = $('#film');
-      ctx = canvas ? canvas.getContext('2d', {alpha:false}) : null;
+      ctx = canvas ? canvas.getContext('2d', { alpha: false }) : null;
       addEventListener('resize', () => {
         redraw();
       });
@@ -233,6 +321,7 @@
       const safety = setTimeout(() => api.start(false), 12000);
       let hasFrames = false;
       try { hasFrames = await preload(cfg); } catch (e) { console.warn('frames', e); }
+      stopFakePct();
       clearTimeout(safety);
       hadFrames = hasFrames;
       api.start(hasFrames);
@@ -259,7 +348,7 @@
     build() {
       if (!booted || !api._started || typeof ScrollTrigger === 'undefined') return;
       canvas = $('#film');
-      ctx = canvas ? canvas.getContext('2d', {alpha:false}) : null;
+      ctx = canvas ? canvas.getContext('2d', { alpha: false }) : null;
       if (canvas) { redraw(); buildHero(hadFrames); }
       buildReveals();
       buildHorizontal();
@@ -273,12 +362,14 @@
     },
     scrollTo(el) {
       if (!el) return;
-      if (lenis) lenis.scrollTo(el, {offset:-70, duration:1.4});
-      else scrollTo({top: el.offsetTop - 70, behavior:'smooth'});
+      if (lenis) lenis.scrollTo(el, { offset: -70, duration: 1.4 });
+      else scrollTo({ top: el.offsetTop - 70, behavior: 'smooth' });
     },
     refresh() { if (booted && typeof ScrollTrigger !== 'undefined') ScrollTrigger.refresh(); },
-    frames: () => ({count: frameCount, current: currentIdx, mode: frameCount ? 'frames' : 'estático'}),
+    frames: () => ({ count: frameCount, current: currentIdx, mode: frameCount ? 'frames' : 'estático' }),
   };
 
+  // Inicia a contagem assim que o script carrega (antes do React dar boot).
+  startBootPct();
   window.Motion = api;
 })();

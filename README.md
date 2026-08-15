@@ -69,6 +69,7 @@ icons.jsx             Ícones em SVG
 frames-manifest.js    Manifesto da sequência de frames da abertura
 schema.sql            Banco de dados PostgreSQL pronto para o servidor
 Guia de Producao.html Guia de implantação (endpoints, variáveis, gateways)
+Guia de Movimento.md  Guia completo da camada de movimento (Lenis/GSAP/ScrollTrigger)
 assets/               Fotos do studio
 assets/frames/        (criar) sequência da abertura: f-0001.jpg, f-0002.jpg…
 vendor/               GSAP, ScrollTrigger e Lenis — locais, funciona offline
@@ -83,9 +84,16 @@ Componentes compartilhados são exportados no fim do arquivo com
 ## Painel administrativo
 
 Rodapé do site → botão **Painel administrativo**.
-Usuário e senha iniciais ficam em `store.jsx` → `settings.account`.
-**Defina uma senha real antes de publicar** — o valor de exemplo no repositório
-é só um placeholder (`TROCAR_ANTES_DE_PUBLICAR`), nunca a senha de produção.
+Autenticação agora é feita no **backend**, com usuários em `admin_users`
+(senha com hash bcrypt) e sessão em cookie `httpOnly` (`admin_sessions`).
+
+Bootstrap inicial de usuários (Achilles + Angela):
+
+```bash
+# 1) edite as senhas no arquivo
+# 2) execute:
+psql "$DATABASE_URL" -f backend/sql/admin-users-bootstrap.sql
+```
 
 Abas:
 
