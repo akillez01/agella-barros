@@ -3,6 +3,25 @@
 Site + loja + agendamento + painel administrativo do studio, em Parintins (AM).
 Front-end em HTML, CSS e React (via Babel no navegador), sem etapa de build.
 
+**Site ao vivo:** [angellabarros.com](https://angellabarros.com)
+
+---
+
+## Sobre o projeto
+
+Projeto full-stack desenvolvido do zero para um studio de beleza real: site
+institucional, loja com carrinho e Pix/cartão, agendamento de serviços em
+5 passos, feed do Instagram sincronizado e um painel administrativo completo
+para a dona do negócio gerenciar tudo — produtos, pedidos, agenda, galeria e
+conteúdo das páginas — sem depender de programador para o dia a dia.
+
+**Stack:** React (sem build, via Babel no navegador) · Node.js/TypeScript ·
+Express · PostgreSQL · Docker · integração com IA (Anthropic/Gemini) para
+concierge de atendimento.
+
+**Meu papel:** projeto individual — arquitetura, front-end, backend, schema
+de banco de dados e deploy (Docker + Postgres, Plesk).
+
 ---
 
 ## Como abrir no VS Code
