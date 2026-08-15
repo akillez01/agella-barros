@@ -1,0 +1,37 @@
+name: angellabarros
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: angellabarros
+      POSTGRES_PASSWORD: d2e30a20b2b6abce8fa7a45751e8732fb0da81fb
+      POSTGRES_DB: angellabarros
+    volumes:
+      - angellabarros_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U angellabarros"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3006:3001"
+    env_file:
+      - ./backend/.env
+    environment:
+      DATABASE_URL: postgresql://angellabarros:d2e30a20b2b6abce8fa7a45751e8732fb0da81fb@postgres:5432/angellabarros
+    volumes:
+      - ./data/uploads:/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  angellabarros_postgres_data:

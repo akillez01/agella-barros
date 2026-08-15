@@ -1,0 +1,9 @@
+Sequência de frames da abertura.
+
+Coloque aqui as fotos numeradas: f-0001.jpg, f-0002.jpg, f-0003.jpg…
+Depois abra o painel → aba Abertura e informe o total de frames.
+
+Recomendado: 90 a 180 imagens, 1600px de largura, exportadas de um vídeo
+curto do studio (1 frame a cada 2 ou 3 do vídeo original).
+
+Enquanto o total for 0, o site usa a foto principal com aproximação suave.

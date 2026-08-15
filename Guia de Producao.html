@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Guia de produção — Angella Barros Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--wine-900:#4A0E1C;--wine-700:#6e1f31;--cream-50:#F9F5F2;--cream-100:#F2ECE5;--ink-900:#1a1411;--ink-700:#3d322d;--ink-500:#7a6b63;--gold:#B8935A;--rule:rgba(74,14,28,.14);--serif:"Cormorant Garamond",serif;--sans:"Jost",system-ui,sans-serif}
+doc-page:not(:defined){visibility:hidden}
+doc-page{font-family:var(--sans);color:var(--ink-900);font-size:10.5pt;line-height:1.62}
+h1,h2,h3{font-family:var(--serif);color:var(--wine-900);font-weight:400;margin:0}
+h1{font-size:30pt;line-height:1.02;letter-spacing:-.01em}
+h2{font-size:17pt;margin:26pt 0 8pt;padding-top:10pt;border-top:1px solid var(--rule)}
+h3{font-size:12.5pt;margin:16pt 0 5pt;font-weight:500}
+p{margin:0 0 8pt}
+a{color:var(--wine-700)}a:hover{color:var(--gold)}
+.kicker{font-size:7.5pt;letter-spacing:.3em;text-transform:uppercase;color:var(--gold);font-weight:500}
+.lede{font-size:12pt;color:var(--ink-700);max-width:52em;margin-top:10pt}
+.meta{font-size:8.5pt;color:var(--ink-500);letter-spacing:.06em;margin-top:14pt;padding-bottom:14pt;border-bottom:1px solid var(--rule)}
+ul,ol{margin:0 0 9pt;padding-left:15pt}
+li{margin-bottom:3.5pt}
+code{font-family:ui-monospace,Menlo,monospace;font-size:9pt;background:var(--cream-100);padding:1px 4px;border-radius:3px;color:var(--wine-900)}
+pre{background:var(--cream-100);border-left:2px solid var(--gold);padding:9pt 11pt;border-radius:0 4px 4px 0;font-family:ui-monospace,Menlo,monospace;font-size:8.5pt;line-height:1.55;overflow-x:auto;break-inside:avoid;margin:0 0 10pt;color:var(--ink-700)}
+table{width:100%;border-collapse:collapse;font-size:9.5pt;margin:0 0 12pt}
+th{text-align:left;font-size:7.5pt;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-500);font-weight:500;padding:6pt 8pt;border-bottom:1px solid var(--rule);background:var(--cream-100)}
+td{padding:6pt 8pt;border-bottom:1px solid var(--rule);vertical-align:top;color:var(--ink-700)}
+td strong{color:var(--wine-900);font-weight:500}
+.box{background:var(--cream-50);border:1px solid var(--rule);border-radius:5px;padding:11pt 13pt;margin:0 0 12pt;break-inside:avoid}
+.box.dark{background:var(--wine-900);border-color:var(--wine-900);color:var(--cream-100)}
+.box.dark strong,.box.dark h3{color:#fff}
+.box.dark p,.box.dark li{color:rgba(249,245,242,.82)}
+.box h3{margin-top:0}
+.check{list-style:none;padding-left:0}
+.check li{padding-left:16pt;position:relative}
+.check li::before{content:"□";position:absolute;left:0;color:var(--gold);font-size:11pt;line-height:1.3}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12pt;break-inside:avoid}
+.foot-note{font-size:8.5pt;color:var(--ink-500);display:flex;justify-content:space-between;border-top:1px solid var(--rule);padding-top:5pt}
+</style>
+</head>
+<body>
+<doc-page margin="0.8in">
+  <div slot="footer" class="foot-note"><span>Angella Barros Studio de Beleza · Parintins — AM</span><span>Guia de implantação</span></div>
+
+  <div class="kicker">Documento técnico</div>
+  <h1>Do protótipo ao servidor:<br/>o que falta para vender de verdade</h1>
+  <p class="lede">O site já tem loja, checkout com Pix e cartão, painel administrativo com login e o banco de dados desenhado. Este guia lista, em ordem, o que precisa ser contratado, configurado e testado para colocar tudo no ar.</p>
+  <div class="meta">Agosto de 2026 · Acompanha <code>schema.sql</code></div>
+
+  <h2>1. O que já está pronto no protótipo</h2>
+  <table>
+    <thead><tr><th>Recurso</th><th>Estado</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Painel administrativo</strong></td><td>Login com usuário e senha, sessão por aba, troca de senha pelo próprio painel</td></tr>
+      <tr><td><strong>Produtos</strong></td><td>Criar, editar, remover, preço, estoque, foto e descrição</td></tr>
+      <tr><td><strong>Imagens</strong></td><td>Galeria, Instagram, fotos das especialistas e foto do topo — todas trocáveis pelo painel</td></tr>
+      <tr><td><strong>Checkout</strong></td><td>Dados da cliente, retirada ou entrega, frete grátis por valor, resumo do pedido</td></tr>
+      <tr><td><strong>Pix</strong></td><td>QR Code e código copia-e-cola gerados no padrão do Banco Central a partir da chave cadastrada</td></tr>
+      <tr><td><strong>Cartão</strong></td><td>Formulário com validação e parcelamento — falta apenas conectar o gateway</td></tr>
+      <tr><td><strong>Pedidos</strong></td><td>Lista com status, baixa de estoque automática e atalho para o WhatsApp da cliente</td></tr>
+      <tr><td><strong>Banco de dados</strong></td><td>Schema PostgreSQL completo em <code>schema.sql</code></td></tr>
+    </tbody>
+  </table>
+  <div class="box">
+    <h3>O que ainda é simulado</h3>
+    <p>Hoje os dados ficam salvos no navegador de quem acessa, não em um servidor. O pagamento no cartão não é cobrado de verdade e a confirmação do Pix é manual (a cliente avisa pelo WhatsApp). Os três itens abaixo resolvem isso.</p>
+  </div>
+
+  <h2>2. Contas e serviços a contratar</h2>
+  <table>
+    <thead><tr><th>Item</th><th>Sugestão</th><th>Custo aprox./mês</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Domínio</strong></td><td>angellabarros.com.br (Registro.br)</td><td>R$ 40/ano</td></tr>
+      <tr><td><strong>Hospedagem</strong></td><td>Vercel, Railway ou Hostinger VPS</td><td>R$ 0–60</td></tr>
+      <tr><td><strong>Banco PostgreSQL</strong></td><td>Neon, Supabase ou Railway</td><td>R$ 0–50</td></tr>
+      <tr><td><strong>Armazenamento de fotos</strong></td><td>Cloudflare R2, AWS S3 ou Cloudinary</td><td>R$ 0–25</td></tr>
+      <tr><td><strong>Gateway de pagamento</strong></td><td>Mercado Pago (Pix + cartão, sem mensalidade)</td><td>taxa por venda</td></tr>
+      <tr><td><strong>E-mail transacional</strong></td><td>Resend ou Brevo</td><td>R$ 0</td></tr>
+      <tr><td><strong>WhatsApp automático</strong></td><td>API oficial via Z-API ou Twilio (opcional)</td><td>R$ 40–120</td></tr>
+    </tbody>
+  </table>
+  <p>Sobre taxas: no Mercado Pago o Pix costuma ficar em torno de 0,99% por transação e o cartão de crédito entre 3% e 5% conforme o prazo de recebimento. Vale conferir as tabelas atuais antes de definir os preços da loja.</p>
+
+  <h2>3. Banco de dados</h2>
+  <p>O arquivo <code>schema.sql</code> cria tudo: acesso ao painel, mídia, produtos, clientes, pedidos, itens, pagamentos, webhooks, serviços, agenda com trava de horário duplicado, galeria, Instagram, configurações, newsletter, histórico da IA e auditoria.</p>
+  <pre>createdb angella_studio
+psql "$DATABASE_URL" -f schema.sql</pre>
+  <p>Três decisões que já estão embutidas e que vale conhecer: valores em <strong>centavos</strong> (nunca dá erro de arredondamento), <strong>cópia dos dados no pedido</strong> (mudar o preço de um produto não altera vendas antigas) e <strong>baixa de estoque por gatilho</strong> no próprio banco.</p>
+
+  <h2>4. API que o servidor precisa expor</h2>
+  <table>
+    <thead><tr><th>Rota</th><th>Função</th></tr></thead>
+    <tbody>
+      <tr><td><code>POST /api/auth/login</code></td><td>Valida usuário e senha, devolve cookie de sessão httpOnly</td></tr>
+      <tr><td><code>GET /api/catalog</code></td><td>Produtos, galeria, perfis, Instagram e configurações públicas</td></tr>
+      <tr><td><code>POST /api/orders</code></td><td>Cria o pedido, calcula o total no servidor e reserva o estoque</td></tr>
+      <tr><td><code>POST /api/payments/pix</code></td><td>Gera a cobrança Pix no gateway e devolve QR + copia-e-cola</td></tr>
+      <tr><td><code>POST /api/payments/card</code></td><td>Recebe o token do cartão e autoriza a cobrança</td></tr>
+      <tr><td><code>POST /api/webhooks/:provider</code></td><td>Recebe a confirmação do pagamento e muda o pedido para “pago”</td></tr>
+      <tr><td><code>POST /api/admin/upload</code></td><td>Envia a imagem ao bucket e grava em <code>media</code></td></tr>
+      <tr><td><code>CRUD /api/admin/*</code></td><td>Produtos, galeria, Instagram, perfis, pedidos, agenda, configurações</td></tr>
+      <tr><td><code>POST /api/bookings</code></td><td>Agendamento com verificação de horário livre</td></tr>
+      <tr><td><code>GET /api/instagram</code></td><td>Últimas publicações do perfil, em cache — alimenta a atualização automática do site</td></tr>
+    </tbody>
+  </table>
+  <div class="box dark">
+    <h3>Regra que não pode ser quebrada</h3>
+    <p>O <strong>valor cobrado é sempre recalculado no servidor</strong> a partir do preço em banco. O que vem do navegador é só a lista de produtos e quantidades — nunca o total. Da mesma forma, o pedido só vira “pago” pelo webhook do gateway, jamais por um clique da cliente.</p>
+  </div>
+
+  <h2>5. Pagamentos, passo a passo</h2>
+  <h3>Pix</h3>
+  <ol>
+    <li>Angella cadastra a chave Pix no painel → Pagamentos. O QR já funciona nesse momento, com confirmação manual.</li>
+    <li>Para confirmação automática: criar a aplicação no Mercado Pago, guardar o <code>ACCESS_TOKEN</code> no servidor e usar cobranças dinâmicas com vencimento (30 min).</li>
+    <li>Configurar o webhook <code>payment.updated</code> apontando para <code>/api/webhooks/mercadopago</code>: ao receber “approved”, marcar o pedido como pago e avisar a cliente.</li>
+  </ol>
+  <h3>Cartão</h3>
+  <ol>
+    <li>Carregar o SDK do gateway no site e trocar o formulário atual pelos campos seguros dele — os dados do cartão nunca passam pelo nosso servidor, só um token.</li>
+    <li>Enviar o token para <code>/api/payments/card</code> junto do número de parcelas.</li>
+    <li>Guardar apenas bandeira, últimos 4 dígitos e código de autorização, como já previsto na tabela <code>payments</code>.</li>
+  </ol>
+  <pre>DATABASE_URL=postgres://…
+SESSION_SECRET=…                 # 32+ caracteres aleatórios
+MP_ACCESS_TOKEN=APP_USR-…        # segredo, só no servidor
+MP_PUBLIC_KEY=APP_USR-…          # pode ir para o navegador
+MP_WEBHOOK_SECRET=…
+S3_BUCKET=…  S3_KEY=…  S3_SECRET=…
+RESEND_API_KEY=…
+IG_ACCESS_TOKEN=…                # Instagram Graph API (renovar a cada 60 dias)
+ANTHROPIC_API_KEY=…              # concierge IA</pre>
+  <p>Sobre o Instagram: no painel, a aba Instagram tem a chave de atualização automática. Para testar, basta colar um token de acesso; em produção, aponte o campo “endereço no seu servidor” para <code>GET /api/instagram</code> — assim o token fica no servidor, é renovado por rotina e o site só consome o cache (evita estourar o limite da API e expor a credencial).</p>
+
+  <h2>6. Segurança e obrigações legais</h2>
+  <ul>
+    <li>Senha guardada com bcrypt (custo 12) — o banco já espera um hash, nunca a senha em texto.</li>
+    <li>HTTPS obrigatório, cookie de sessão <code>httpOnly; secure; sameSite=lax</code>.</li>
+    <li>Limite de tentativas de login (o campo <code>locked_until</code> já existe) e verificação em duas etapas por SMS se possível.</li>
+    <li>LGPD: política de privacidade, aviso de cookies, consentimento na newsletter e caminho para a cliente pedir exclusão dos dados.</li>
+    <li>Páginas de trocas e devoluções conforme o Código de Defesa do Consumidor (7 dias para arrependimento em compra online).</li>
+    <li>Backup automático diário do banco, com restauração testada pelo menos uma vez.</li>
+    <li>Nota fiscal: se o CNPJ for MEI, avaliar emissão pela prefeitura de Parintins ou por integração (NFE.io, Focus NFe).</li>
+  </ul>
+
+  <h2>7. Roteiro de testes antes de abrir</h2>
+  <div class="two">
+    <div class="box">
+      <h3>Loja e pagamento</h3>
+      <ul class="check">
+        <li>Compra com Pix paga de verdade (R$ 1,00)</li>
+        <li>Compra com cartão em ambiente sandbox</li>
+        <li>Cartão recusado mostra mensagem clara</li>
+        <li>Pedido aparece no painel com status certo</li>
+        <li>Estoque baixa e produto esgotado some da loja</li>
+        <li>Frete grátis aplica no valor configurado</li>
+        <li>Webhook confirma pagamento sem clique</li>
+      </ul>
+    </div>
+    <div class="box">
+      <h3>Painel e conteúdo</h3>
+      <ul class="check">
+        <li>Angella cria um produto do zero, com foto</li>
+        <li>Troca a foto do topo e das especialistas</li>
+        <li>Envia 5 fotos na galeria de uma vez</li>
+        <li>Senha errada bloqueia após 5 tentativas</li>
+        <li>Sair da conta encerra a sessão</li>
+        <li>Agendamento não aceita horário ocupado</li>
+        <li>Site abre bem no celular (a maioria das clientes)</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2>8. Ordem sugerida de implantação</h2>
+  <table>
+    <thead><tr><th>Etapa</th><th>O que entra no ar</th><th>Prazo</th></tr></thead>
+    <tbody>
+      <tr><td><strong>1</strong></td><td>Domínio, hospedagem, banco criado com <code>schema.sql</code></td><td>1 dia</td></tr>
+      <tr><td><strong>2</strong></td><td>API de catálogo e painel salvando no banco (fim do armazenamento no navegador)</td><td>3–5 dias</td></tr>
+      <tr><td><strong>3</strong></td><td>Upload de imagens para o bucket</td><td>1 dia</td></tr>
+      <tr><td><strong>4</strong></td><td>Pix com confirmação automática</td><td>2 dias</td></tr>
+      <tr><td><strong>5</strong></td><td>Cartão com o SDK do gateway</td><td>2 dias</td></tr>
+      <tr><td><strong>6</strong></td><td>Agenda real, lembretes e concierge IA ligada ao banco</td><td>3 dias</td></tr>
+      <tr><td><strong>7</strong></td><td>Testes com clientes reais e abertura</td><td>2 dias</td></tr>
+    </tbody>
+  </table>
+  <p>Enquanto as etapas 4 e 5 não ficam prontas, a loja já pode vender: o Pix funciona com confirmação manual pelo WhatsApp assim que a chave estiver cadastrada no painel.</p>
+</doc-page>
+<script src="doc-page.js"></script>
+</body>
+</html>
